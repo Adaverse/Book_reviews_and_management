@@ -64,7 +64,7 @@ def index():
 	else:
 		return render_template('login.html')
 ```
-#### Session
+#### Session (Login and Logout)
 Once a user logs in, his ```id``` is appended into ```session``` dictionary
 ```
 @app.route('/login', methods=["POST", 'GET'])
@@ -106,6 +106,40 @@ Now we can check from anywhere, whether a user has logged in or not. For example
     {% endif %}
     <a href="{{ url_for('books')}}">Books</a>
 </div>
+```
+For logging out, we have to simply remove this key from the dictionary
+```
+@app.route('/logout')
+def logout():
+	'''Logging out or ending a session'''
+
+	session.pop('user_id', None)
+	return render_template('login.html')
+```
+#### Register
+If user does not have an account then he/she has to register and the data provided is inserted into the table. Here only post request method is allowed.
+```
+@app.route('/register', methods = ["POST"])
+def register():
+	'''Register user'''
+
+	#get username
+	username = request.form.get('username')
+	password = request.form.get('password')
+	verify_password = request.form.get('verify_password')
+
+	if password != verify_password:
+		return render_template('error.html', primary_message = 'Error :(', 
+			message = 'Password did not match')
+	elif db.execute('SELECT * FROM users WHERE username = :username', {'username':username}).rowcount != 0:
+		return render_template('error.html', primary_message = 'Error :(', 
+		 message = 'User ' + username + ' already exits')
+	else:
+		db.execute('INSERT INTO users (username, password) VALUES (:username, :password)',
+			{'username':username, 'password':password})
+		db.commit()
+		return render_template('error.html', primary_message = 'Succesfull :)', 
+			message = 'Succesfully registered')
 ```
 ## API
 You can get the data in the following json format once you request at url: ```/api/<string:isbn>```
@@ -150,4 +184,20 @@ def goodread_data_getter(isbn):
 	else:
 		return [res.json()['books'][0]['average_rating'], 
 		res.json()['books'][0]['work_ratings_count']]
+```
+## Search
+You can search from the library using ```isbn```, ```author``` or ```title```. The following snippet extracts the query from ```POST``` request and then searches for it in the database using ```SELECT``` and ```LIKE```
+```
+if( search_type or search) is None:
+	return render_template('books.html',books = books, status = True)
+
+if search_type.lower() == 'isbn':
+	search_result = db.execute("SELECT * FROM books WHERE isbn LIKE :search", 
+		{'search':'%' + search + '%'}).fetchall()
+elif search_type.lower() == 'author':
+	search_result = db.execute("SELECT * FROM books WHERE author LIKE :search", 
+		{'search':'%' + search + '%'}).fetchall()
+else:
+	search_result = db.execute("SELECT * FROM books WHERE title LIKE :search", 
+		{'search':'%' + search + '%'}).fetchall()
 ```
