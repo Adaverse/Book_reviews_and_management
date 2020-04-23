@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Books
+{% endblock %}
+
+{% block body %}
+
+
+<div class = 'container'>
+	<form class="example" action="{{ url_for('books') }}" method="post" style="margin:auto;max-width:300px">
+		<label for="sel1">Search from:</label>
+		<select class="form-control" id="sel1" name = 'search_type'>
+			<option>ISBN</option>
+			<option>Title</option>
+			<option>Author</option>
+		</select>
+		<input type="text" placeholder="Search.." name="search"><button type="submit">
+		<i class="fa fa-search"></i></button>
+	</form>
+	<div class = 'book_list'>
+	{% if status %}
+	<ol>
+		{% for book in books %}
+			<li><a href='{{ url_for("book_info", book_id = book.id) }}' style="text-decoration: none">{{ book.title }}</a></li>
+		{% endfor %}
+	</ol>
+	{% else %}
+		<h3>No books found matching your search query</h3>
+	{% endif %}
+	</div>
+</div>
+{% endblock %}

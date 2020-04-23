@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {{ Welcome }}
+{% endblock %}
+	
+{% block body %}
+
+<div class="jumbotron">
+	<h1 class="display-4">Hello, {{ user.username }}!</h1>
+	<p class="lead">Welcome! we understand your love for books.</p>
+</div>
+<!-- 	<a class="btn btn-primary btn-lg" href="{{ url_for('books')}}" role="button">Book Catalog</a>
+	<a class="btn btn-primary btn-lg" href="{{ url_for('logout') }}" role="button">Logout</a> -->
+
+{% endblock %}

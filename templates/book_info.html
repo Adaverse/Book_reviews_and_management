@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {{ book.title }}
+{% endblock %}
+	
+{% block body %}
+
+<div class = 'container'>
+	<h2>Book : {{ book.title }}</h2>
+	<h3>Author : {{ book.author }}</h3>
+	<h3>Year of publication : {{ book.year }}</h3>
+	<h3>ISBN : {{ book.isbn }}</h3>
+	<h2>Goodread review</h2>
+	<h3>Average rating <strong>{{ good_read_review[0] }} </strong></h3>
+	<h3>Work ratings count <strong>{{ good_read_review[1] }} </strong></h3>
+</div>
+
+<div class = 'review'>
+	{% if book_review %}
+	<div class = 'jumbotron'>
+		<h3>{{ user.username }} review</h3>
+		<p>{{ review }}</p>
+		<p>Rating: <strong>{{rating}}</strong> </p>
+	</div>
+	{% else %}
+		<form action="{{ url_for('book_info', book_id = book.id) }}" method="post">
+			<label for='comment'>Review:</label>
+			<textarea class="form-control" rows="5" id="comment" name = 'Review'>{{ review_conf }}</textarea>
+			<!-- <input name="Review"> -->
+			<label for="sel1">Your rating:</label>
+			<select class="form-control" id="sel1" name = 'rating'>
+				<option>1</option>
+				<option>2</option>
+				<option>3</option>
+				<option>4</option>
+				<option>5</option>
+			</select>
+			<button class="btn btn-primary">Submit</button>
+		</form>
+	{% endif %}
+</div>
+
+{% endblock %}
