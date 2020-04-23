@@ -29,18 +29,6 @@ Once you click on the book, you will be taken to this page where you can see the
 You can only write review once and you can see it by going to that book's info.
 ![GitHub Logo](/images/pic_1_review.png)
 
-## API
-You can get the data in the following json format once you request at url: ```/api/<string:isbn>```
-```
-jsonify({
-  'title':book.title,
-  'author':book.author,
-  'year':book.year,
-  'isbn':isbn,
-  'review_count':good_read[1],
-  'average_score':good_read[0]
-}
-```
 
 ## Database and Table creation
 Create PostegreSQL database and then create table (its in ```create_table.sql```)
@@ -53,7 +41,7 @@ CREATE TABLE books ( id SERIAL PRIMARY KEY,
 );
 ```
 
-Import data into the ```books``` table using ```sqlalchemy```
+Import data into the ```books``` table using ```sqlalchemy``` (its in ```import.py```). For ```sqlalchemy``` to work, you need to export ```DATABASE_URL``` using ```export DATABASE_URL="<actual_url>"```
 ```
 f = open("books.csv")
 reader = csv.reader(f) 
@@ -62,4 +50,104 @@ for isbn, title, author, year in reader:
     db.execute("INSERT INTO books (isbn, title, author, year) VALUES (:isbn, :title, :author, :year)",
                 {"isbn": isbn, "title": title, "author": author, "year":year})
 db.commit()
+```
+## Flask
+In the ```application.py```, you can see that every ```app.route()``` followed by a function which will run under appropriate ```POST``` or ```GET``` request. For example at ```/``` URL
+```
+@app.route("/")
+def index():
+	if 'user_id' in session:
+		user = db.execute('SELECT * FROM users WHERE id = :id', 
+						{'id':session['user_id']}).fetchone()
+		if user:
+			return render_template('user_home.html', user = user)
+	else:
+		return render_template('login.html')
+```
+#### Session
+Once a user logs in, his ```id``` is appended into ```session``` dictionary
+```
+@app.route('/login', methods=["POST", 'GET'])
+def login():
+	'''Login into to write reviews'''
+
+	# get username and password
+	if request.method == 'POST':
+		username = request.form.get('username')
+		password = request.form.get('password')
+
+		user = db.execute('SELECT * FROM users WHERE username = :username',{'username':username}).fetchone()
+
+		if user:
+			if user.password == password:
+				session['user_id'] = user.id
+				return render_template('user_home.html', user = user)
+			else:
+				return render_template('error.html', primary_message = 'Error :(', 
+					message = 'Woops wrong password or username')
+		else:
+			return render_template('error.html', primary_message = 'Error :(',
+				message = "You have either put wrong username or password")
+	else:
+		if 'user_id' in session:
+			user = db.execute('SELECT * FROM users WHERE id = :id', 
+				{'id':session['user_id']}).fetchone()
+			if user:
+				return render_template('user_home.html', user = user)
+	return render_template('login.html')
+```
+Now we can check from anywhere, whether a user has logged in or not. For example, in ```layout.html``` in ```templates``` folder which is the base html from which every other pages inherit from, uses this ```session``` dict.
+```
+<div class = 'sidenav'>
+    {% if 'user_id' in session %}
+        <a href="{{ url_for('logout') }}">Logout</a>
+    {% else %}
+        <a href="{{ url_for('login') }}">Login</a>
+    {% endif %}
+    <a href="{{ url_for('books')}}">Books</a>
+</div>
+```
+## API
+You can get the data in the following json format once you request at url: ```/api/<string:isbn>```
+```
+jsonify({
+  'title':book.title,
+  'author':book.author,
+  'year':book.year,
+  'isbn':isbn,
+  'review_count':good_read[1],
+  'average_score':good_read[0]
+}
+```
+And the following fucntion returns the data that is requested from the above url
+```
+@app.route('/api/<string:isbn>')
+def book_api(isbn):
+	'''API that returns data in json format once requested'''
+
+	book = db.execute('SELECT * FROM books WHERE isbn = :isbn', {'isbn':isbn}).fetchone()
+
+	if book is None:
+		return jsonify({'error':'invalid ISBN'}), 404
+	good_read = goodread_data_getter(isbn)
+	return jsonify({
+		'title':book.title,
+		'author':book.author,
+		'year':book.year,
+		'isbn':isbn,
+		'review_count':good_read[1],
+		'average_score':good_read[0]
+		})
+```
+We are using api provided by Goodreads to get ```work_ratings_count``` and ```average_rating``` and the function that is getting this data is in ```application.py```
+```
+# Function to get the data using api request
+def goodread_data_getter(isbn):
+	res = requests.get("https://www.goodreads.com/book/review_counts.json", 
+		params={"key": goodread_api_key, "isbns": isbn})
+	if res.status_code == 404:
+		return ['None', "None"]
+	else:
+		return [res.json()['books'][0]['average_rating'], 
+		res.json()['books'][0]['work_ratings_count']]
 ```
