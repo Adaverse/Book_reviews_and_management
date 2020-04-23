@@ -1,6 +1,7 @@
 
 ## Website walkthrough
-At this URL '/' or '/login'__
+At this URL ```/``` or ```/login```
+\
 ![GitHub Logo](/images/pic_1_login.png)
 <br/>
 
