@@ -41,7 +41,7 @@ CREATE TABLE books ( id SERIAL PRIMARY KEY,
 );
 ```
 
-Import data into the ```books``` table using ```sqlalchemy``` (its in ```import.py```). For ```sqlalchemy``` to work, you need to export ```DATABASE_URL``` using ```export DATABASE_URL="<actual_url>"```
+Import data into the ```books``` table using ```sqlalchemy``` (its in ```import.py```). For ```sqlalchemy``` to work, you need to export ```DATABASE_URL``` using ```export DATABASE_URL="<actual_url>"``` as an environment variable or directly put into the python file as variable.
 ```
 f = open("books.csv")
 reader = csv.reader(f) 
